@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>List Randomizer</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; line-height: 1.45; }
+    .wrap { max-width: 800px; margin: 0 auto; }
+    .btn { padding: .65rem 1rem; border-radius: 8px; border: 1px solid #222; background: #111; color: #fff; cursor: pointer; }
+    .btn.secondary { background: #fff; color: #111; }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
+    .output { white-space: pre-wrap; background: #fafafa; padding: 1rem; border: 1px solid #e6e6e6; border-radius: 8px; min-height: 4rem; }
+    .muted { color: #666; font-size: .95rem; }
+    code { background: #f2f2f2; padding: .1rem .3rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Protocol Randomizer</h1>
+    <p class="muted">Randomizes the first 2 items together, the next group together, and keeps the final item last.</p>
+
+    <h2>Items</h2>
+    <ul id="showItems"></ul>
+
+    <div class="row" style="margin: 1rem 0;">
+      <button class="btn" id="randomizeBtn">Randomize</button>
+      <button class="btn secondary" id="copyBtn">Copy Output</button>
+      <button class="btn secondary" id="clearBtn">Clear Output</button>
+      <label class="muted">
+        <input type="checkbox" id="showNumbers" checked /> Number the list
+      </label>
+    </div>
+
+    <h2>Output</h2>
+    <div id="output" class="output" aria-live="polite"></div>
+
+    <p class="muted">
+      To edit the items, open this file and change the arrays at the top:
+      <code>PART1</code>, <code>PART2</code>, and <code>FINAL</code>.
+    </p>
+  </div>
+
+  <script>
+    // === YOUR FIXED ITEMS (edit these) ===
+    const PART1 = ["Dual-Task Walking", "mCTSIB"];
+    const PART2 = [
+      "NIH Toolbox",
+      "Mini BESTest",
+      "Snellen & King-Devick test",
+      "Proprioception test",
+      // "Add Item 5 here",
+      // "Add Item 6 here",
+    ];
+    const FINAL = "Humac MVC";
+    // =====================================
+
+    // Fisher–Yates shuffle (unbiased)
+    function shuffled(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function formatList(arr, numbered = true) {
+      if (numbered) return arr.map((x, i) => `${i + 1}. ${x}`).join("\n");
+      return arr.map(x => `• ${x}`).join("\n");
+    }
+
+    // Show the fixed items (for transparency)
+    function renderItems() {
+      const ul = document.getElementById('showItems');
+      ul.innerHTML = "";
+      const li1 = document.createElement('li');
+      li1.textContent = `Part 1 (randomize within): ${PART1.join(" | ")}`;
+      ul.appendChild(li1);
+      const li2 = document.createElement('li');
+      li2.textContent = `Part 2 (randomize within): ${PART2.join(" | ")}`;
+      ul.appendChild(li2);
+      const li3 = document.createElement('li');
+      li3.textContent = `Final item (always last): ${FINAL}`;
+      ul.appendChild(li3);
+    }
+
+    function runRandomize() {
+      // Optional integrity checks (you can relax these if you add/remove items)
+      if (PART1.length !== 2) {
+        alert(`Part 1 must have exactly 2 items (currently ${PART1.length}).`);
+        return;
+      }
+      if (PART2.length < 1) {
+        alert('Part 2 must have at least 1 item.');
+        return;
+      }
+      if (!FINAL || typeof FINAL !== 'string') {
+        alert('Final item (Part 3) must be a non-empty string.');
+        return;
+      }
+
+      const result = [
+        ...shuffled(PART1),
+        ...shuffled(PART2),
+        FINAL
+      ];
+      const numbered = document.getElementById('showNumbers').checked;
+      document.getElementById('output').textContent = formatList(result, numbered);
+    }
+
+    document.getElementById('randomizeBtn').addEventListener('click', runRandomize);
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      const text = document.getElementById('output').textContent;
+      if (!text) return alert('No output yet. Click Randomize first.');
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('Copied to clipboard!');
+      } catch {
+        alert('Copy failed—select and copy manually.');
+      }
+    });
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        document.getElementById('output').textContent = "";
+    });
+
+    // Initial render and first run
+    renderItems();
+    runRandomize();
+  </script>
+</body>
+</html>
